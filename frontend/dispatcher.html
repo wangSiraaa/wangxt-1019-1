@@ -69,11 +69,11 @@
         </div>
       </h2>
       <div class="tabs">
-        <div class="tab active" onclick="switchPlanTab("all", this)">全部</div>
-        <div class="tab" onclick="switchPlanTab("pending", this)">待出发</div>
-        <div class="tab" onclick="switchPlanTab("in_progress", this)">进行中</div>
-        <div class="tab" onclick="switchPlanTab("completed", this)">已完成</div>
-        <div class="tab" onclick="switchPlanTab("withdrawn", this)">已撤回</div>
+        <div class="tab active" onclick="switchPlanTab('all', this)">全部</div>
+        <div class="tab" onclick="switchPlanTab('pending', this)">待出发</div>
+        <div class="tab" onclick="switchPlanTab('in_progress', this)">进行中</div>
+        <div class="tab" onclick="switchPlanTab('completed', this)">已完成</div>
+        <div class="tab" onclick="switchPlanTab('withdrawn', this)">已撤回</div>
       </div>
       <table>
         <thead>
@@ -129,7 +129,7 @@
         <textarea id="dispatch-remark" rows="2"></textarea>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="hideModal("dispatch-modal")">取消</button>
+        <button class="btn btn-secondary" onclick="hideModal('dispatch-modal')">取消</button>
         <button class="btn btn-primary" onclick="submitDispatch()">确认派车</button>
       </div>
     </div>
@@ -157,7 +157,7 @@
         ⚠️ 撤回后淤积点将重新回到待派车状态，车辆占用容量将被释放。
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="hideModal("withdraw-modal")">取消</button>
+        <button class="btn btn-secondary" onclick="hideModal('withdraw-modal')">取消</button>
         <button class="btn btn-danger" onclick="submitWithdraw()">确认撤回</button>
       </div>
     </div>

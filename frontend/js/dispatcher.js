@@ -38,7 +38,7 @@ function updateStats(stats) {
 function renderPendingList() {
   const sorted = [...siltPoints].sort((a, b) => {
     if (a.priority !== b.priority) return b.priority - a.priority;
-    return new Date(a.created_at) - new Date(b.created_at);
+    return new Date(a.report_time) - new Date(b.report_time);
   });
   const tbody = document.getElementById("pending-list");
   tbody.innerHTML = sorted.map(sp => {
@@ -48,7 +48,7 @@ function renderPendingList() {
     const noParkingTag = sp.is_no_parking ? "<span class=\"no-parking-tag\">禁停</span>" : "";
     const priorityText = sp.priority >= 10 ? "<span class=\"priority-high\">高</span>" : "普通";
     return `<tr>
-      <td><strong>${sp.plan_code}</strong>${noParkingTag}</td>
+      <td><strong>${sp.code}</strong>${noParkingTag}</td>
       <td>${sp.location_name || "-"}</td>
       <td>${sp.bike_count}辆</td>
       <td>${priorityText}</td>
@@ -84,7 +84,7 @@ function openDispatchModal(siltId) {
   selectedSiltId = siltId;
   const sp = siltPoints.find(s => s.id === siltId);
   if (sp == null) return;
-  document.getElementById("dispatch-silt-info").value = sp.plan_code + " - " + (sp.location_name || "");
+  document.getElementById("dispatch-silt-info").value = sp.code + " - " + (sp.location_name || "");
   const vehicleSelect = document.getElementById("dispatch-vehicle");
   vehicleSelect.innerHTML = vehicles.map(v => {
     const available = v.capacity - (v.current_load || 0);
@@ -165,17 +165,17 @@ function renderPlans() {
   if (currentPlanTab !== "all") {
     filtered = filtered.filter(p => p.status === currentPlanTab);
   }
-  filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  filtered.sort((a, b) => new Date(b.create_time || b.dispatch_time) - new Date(a.create_time || a.dispatch_time));
   const tbody = document.getElementById("plans-list");
   tbody.innerHTML = filtered.map(p => {
     const noParkingTag = p.is_no_parking ? "<span class=\"no-parking-tag\">禁停</span>" : "";
     let actions = "";
     if (p.status === "pending") {
-      actions = `<button class=\"btn btn-success btn-sm\" onclick=\"startPlan(${p.id})\">开始</button> 
-      actions += `<button class=\"btn btn-danger btn-sm\" onclick=\"openWithdrawModal(${p.id})\">撤回</button>`;
+      actions = '<button class="btn btn-success btn-sm" onclick="startPlan(' + p.id + ')">开始</button> ';
+      actions += '<button class="btn btn-danger btn-sm" onclick="openWithdrawModal(' + p.id + ')">撤回</button>';
     } else if (p.status === "in_progress") {
-      actions = `<button class=\"btn btn-primary btn-sm\" onclick=\"completePlan(${p.id})\">完成</button> 
-      actions += `<button class=\"btn btn-danger btn-sm\" onclick=\"openWithdrawModal(${p.id})\">撤回</button>`;
+      actions = '<button class="btn btn-primary btn-sm" onclick="completePlan(' + p.id + ')">完成</button> ';
+      actions += '<button class="btn btn-danger btn-sm" onclick="openWithdrawModal(' + p.id + ')">撤回</button>';
     } else if (p.status === "withdrawn") {
       actions = "<span style=\"color:#999;font-size:0.85rem;\">" + (p.withdraw_reason || "-") + "</span>";
     } else {

@@ -274,7 +274,7 @@
       "is_secondary_silt": 0,
       "parent_silt_id": null,
       "create_time": "2026-06-14 22:20:21",
-      "update_time": "2026-06-15 00:36:52"
+      "update_time": "2026-06-15 22:58:32"
     },
     {
       "id": 13,
@@ -1838,6 +1838,26 @@
       "snapshot_time": "2026-06-15 00:58:24",
       "operator": "系统",
       "remark": "完成清运: 完成清运 20 辆"
+    },
+    {
+      "id": 72,
+      "silt_point_id": 12,
+      "status": "dispatched",
+      "bike_count": 35,
+      "broken_bike_count": 3,
+      "snapshot_time": "2026-06-15 22:58:32",
+      "operator": "测试调度",
+      "remark": "派车: 车辆: 京A12345, 装载: 10辆"
+    },
+    {
+      "id": 73,
+      "silt_point_id": 12,
+      "status": "reported",
+      "bike_count": 35,
+      "broken_bike_count": 3,
+      "snapshot_time": "2026-06-15 22:58:32",
+      "operator": "调度员",
+      "remark": "撤回派车: 撤回原因: 测试回归 - 车辆临时故障"
     }
   ],
   "vehicles": [
@@ -2179,6 +2199,29 @@
       "withdraw_time": "2026-06-15 00:58:24",
       "create_time": "2026-06-15 00:58:24",
       "update_time": "2026-06-15 00:58:24"
+    },
+    {
+      "id": 15,
+      "plan_code": "DP000016",
+      "silt_point_id": 12,
+      "silt_point_code": "SP202606148070",
+      "vehicle_id": 1,
+      "vehicle_code": "京A12345",
+      "driver_id": 1,
+      "driver_name": "测试司机",
+      "planned_bikes": 10,
+      "route_cost": 50,
+      "priority": 10,
+      "is_no_parking": 1,
+      "status": "withdrawn",
+      "dispatcher": "测试调度",
+      "dispatch_time": "2026-06-15 22:58:32",
+      "start_time": null,
+      "complete_time": null,
+      "withdraw_reason": "测试回归 - 车辆临时故障",
+      "withdraw_time": "2026-06-15 22:58:32",
+      "create_time": "2026-06-15 22:58:32",
+      "update_time": "2026-06-15 22:58:32"
     }
   ],
   "vehicleLoads": [],
@@ -2225,6 +2268,13 @@
       "reason": "车辆临时故障，需要更换车辆",
       "operator": "调度员小李",
       "withdraw_time": "2026-06-15 00:58:24"
+    },
+    {
+      "id": 7,
+      "dispatch_plan_id": 15,
+      "reason": "测试回归 - 车辆临时故障",
+      "operator": "调度员",
+      "withdraw_time": "2026-06-15 22:58:32"
     }
   ],
   "complaints": [
@@ -2282,14 +2332,14 @@
   "performanceStats": [],
   "nextIds": {
     "siltPoints": 50,
-    "siltPointSnapshots": 72,
+    "siltPointSnapshots": 74,
     "vehicles": 4,
     "drivers": 4,
     "driverShifts": 1,
-    "dispatchPlans": 15,
+    "dispatchPlans": 16,
     "vehicleLoads": 1,
     "driverTracks": 1,
-    "withdrawRecords": 7,
+    "withdrawRecords": 8,
     "complaints": 5,
     "slaConfig": 3,
     "performanceStats": 1

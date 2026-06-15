@@ -109,38 +109,38 @@ function updateRedList(list) {
 
 function updatePerfStats(perf) {
   const container = document.getElementById("perf-stats");
-  const avgMinutes = perf.avg_process_minutes?.toFixed?.(1) || perf.avg_process_minutes || 0;
-  container.innerHTML = `
-    <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;\">
-      <div class=\"perf-item\">
-        <div class=\"perf-label\">调度员人均处理</div>
-        <div class=\"perf-value\">${perf.avg_per_dispatcher || 0}单</div>
-      </div>
-      <div class=\"perf-item\">
-        <div class=\"perf-label\">平均处理时效</div>
-        <div class=\"perf-value\">${avgMinutes}分</div>
-      </div>
-      <div class=\"perf-item\">
-        <div class=\"perf-label\">车辆周转率</div>
-        <div class=\"perf-value\">${Math.round(perf.vehicle_turnover || 0)}次/车</div>
-      </div>
-      <div class=\"perf-item\">
-        <div class=\"perf-label\">SLA达标率</div>
-        <div class=\"perf-value\" style=\"color:${(perf.sla_rate || 0) >= 90 ? "#27ae60" : "#e74c3c"};\">${(perf.sla_rate || 0).toFixed?.(1)}%</div>
-      </div>
-    </div>
-    <div style=\"margin-top:1rem;padding-top:1rem;border-top:1px solid #eee;\">
-      <div class=\"perf-label\">调度员排行</div>
-      <div style=\"margin-top:0.5rem;\">
-        ${(perf.by_dispatcher || []).slice(0, 3).map((d, i) => `
-          <div style=\"display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.9rem;\">
-            <span>${i + 1}. ${d.name}</span>
-            <span style=\"color:#3498db;font-weight:bold;\">${d.count}单</span>
-          </div>
-        ").join("")}
-      </div>
-    </div>
-  `;
+  const avgMinutes = (perf.avg_process_minutes && typeof perf.avg_process_minutes.toFixed === "function")
+    ? perf.avg_process_minutes.toFixed(1)
+    : (perf.avg_process_minutes || 0);
+  const slaRate = perf.sla_rate || 0;
+  const slaColor = slaRate >= 90 ? "#27ae60" : "#e74c3c";
+  const slaText = typeof slaRate.toFixed === "function" ? slaRate.toFixed(1) : slaRate;
+
+  let rankHtml = "";
+  const dispatchers = perf.by_dispatcher || [];
+  dispatchers.slice(0, 3).forEach((d, i) => {
+    rankHtml += '<div style="display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.9rem;">' +
+      '<span>' + (i + 1) + '. ' + d.name + '</span>' +
+      '<span style="color:#3498db;font-weight:bold;">' + d.count + '单</span>' +
+      '</div>';
+  });
+
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">' +
+    '<div class="perf-item"><div class="perf-label">调度员人均处理</div>' +
+    '<div class="perf-value">' + (perf.avg_per_dispatcher || 0) + '单</div></div>' +
+    '<div class="perf-item"><div class="perf-label">平均处理时效</div>' +
+    '<div class="perf-value">' + avgMinutes + '分</div></div>' +
+    '<div class="perf-item"><div class="perf-label">车辆周转率</div>' +
+    '<div class="perf-value">' + Math.round(perf.vehicle_turnover || 0) + '次/车</div></div>' +
+    '<div class="perf-item"><div class="perf-label">SLA达标率</div>' +
+    '<div class="perf-value" style="color:' + slaColor + ';">' + slaText + '%</div></div>' +
+    '</div>' +
+    '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #eee;">' +
+    '<div class="perf-label">调度员排行</div>' +
+    '<div style="margin-top:0.5rem;">' + rankHtml + '</div>' +
+    '</div>';
+
+  container.innerHTML = html;
 }
 
 function updateHeatmap(data) {

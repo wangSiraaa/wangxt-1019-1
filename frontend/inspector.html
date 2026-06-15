@@ -39,11 +39,11 @@
         <button class="btn btn-primary" style="margin-left:auto;" onclick="showReportModal()">+ 上报淤积点</button>
       </h2>
       <div class="tabs">
-        <div class="tab active" onclick="switchTab("all", this)">全部</div>
-        <div class="tab" onclick="switchTab("reported", this)">待处理</div>
-        <div class="tab" onclick="switchTab("processing", this)">处理中</div>
-        <div class="tab" onclick="switchTab("closed", this)">已关闭</div>
-        <div class="tab" onclick="switchTab("noParking", this)">禁停区</div>
+        <div class="tab active" onclick="switchTab('all', this)">全部</div>
+        <div class="tab" onclick="switchTab('reported', this)">待处理</div>
+        <div class="tab" onclick="switchTab('processing', this)">处理中</div>
+        <div class="tab" onclick="switchTab('closed', this)">已关闭</div>
+        <div class="tab" onclick="switchTab('noParking', this)">禁停区</div>
       </div>
       <table>
         <thead>
@@ -100,7 +100,7 @@
         <textarea id="report-remark" rows="3" placeholder="选填"></textarea>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="hideModal("report-modal")">取消</button>
+        <button class="btn btn-secondary" onclick="hideModal('report-modal')">取消</button>
         <button class="btn btn-primary" onclick="submitReport()">提交上报</button>
       </div>
     </div>

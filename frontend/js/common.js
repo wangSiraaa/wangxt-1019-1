@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3000/api
+const API_BASE = "http://localhost:3000/api";
 
 async function apiGet(url) {
   const res = await fetch(API_BASE + url);
