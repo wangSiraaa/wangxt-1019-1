@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>运营经理 - 共享单车调度系统</title>
+  <link rel="stylesheet" href="css/common.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back-btn">返回首页</a>
+    <h1>📊 运营经理工作台</h1>
+    <span style="color:#888;font-size:0.9rem;">数据看板 · 绩效分析</span>
+  </div>
+
+  <div class="container">
+    <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+      <div class="stat-card">
+        <div class="label">总淤积点</div>
+        <div class="value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">已关闭</div>
+        <div class="value" id="stat-closed" style="color:#27ae60;">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">SLA逾期</div>
+        <div class="value" id="stat-overdue" style="color:#e74c3c;">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">二次淤积</div>
+        <div class="value" id="stat-secondary" style="color:#f39c12;">0</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>📈 SLA 达标情况</h2>
+        <div id="sla-chart" class="chart-container"></div>
+      </div>
+      <div class="card">
+        <h2>📊 投诉来源分布</h2>
+        <div id="complaint-chart" class="chart-container"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:1.5rem;">
+      <div class="card">
+        <h2>🚨 SLA 红榜（逾期最严重）</h2>
+        <div id="red-list" style="max-height:350px;overflow-y:auto;">
+        </div>
+      </div>
+      <div class="card">
+        <h2>📋 绩效统计</h2>
+        <div id="perf-stats" style="padding:0.5rem 0;">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <h2>🔥 热力图（淤积点分布）</h2>
+      <div id="heatmap-chart" style="height:400px;"></div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:1.5rem;">
+      <div class="card">
+        <h2>🔄 二次淤积点</h2>
+        <div id="secondary-list" style="max-height:300px;overflow-y:auto;">
+        </div>
+      </div>
+      <div class="card">
+        <h2>📝 撤回原因分布</h2>
+        <div id="withdraw-chart" class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/manager.js"></script>
+</body>
+</html>

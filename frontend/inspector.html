@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>巡检员 - 共享单车调度系统</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back-btn">返回首页</a>
+    <h1>🔍 巡检员工作台</h1>
+    <span style="color:#888;font-size:0.9rem;">上报淤积点 · 查看任务</span>
+  </div>
+
+  <div class="container">
+    <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+      <div class="stat-card">
+        <div class="label">待处理淤积点</div>
+        <div class="value" id="stat-reported">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">处理中</div>
+        <div class="value" id="stat-processing">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">禁停区任务</div>
+        <div class="value" id="stat-noparking" style="color:#e74c3c;">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">今日已上报</div>
+        <div class="value" id="stat-today">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span>淤积点列表</span>
+        <button class="btn btn-primary" style="margin-left:auto;" onclick="showReportModal()">+ 上报淤积点</button>
+      </h2>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab("all", this)">全部</div>
+        <div class="tab" onclick="switchTab("reported", this)">待处理</div>
+        <div class="tab" onclick="switchTab("processing", this)">处理中</div>
+        <div class="tab" onclick="switchTab("closed", this)">已关闭</div>
+        <div class="tab" onclick="switchTab("noParking", this)">禁停区</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>编号</th>
+            <th>网格</th>
+            <th>地址</th>
+            <th>车辆数</th>
+            <th>故障车</th>
+            <th>状态</th>
+            <th>SLA剩余</th>
+            <th>上报时间</th>
+          </tr>
+        </thead>
+        <tbody id="silt-list">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal" id="report-modal">
+    <div class="modal-content">
+      <h3>上报淤积点</h3>
+      <div class="form-group">
+        <label>网格编码</label>
+        <select id="report-grid">
+          <option value="G001">G001 - 中心广场</option>
+          <option value="G002">G002 - 科技园</option>
+          <option value="G003">G003 - 商业街</option>
+          <option value="G004">G004 - 住宅区</option>
+          <option value="G005">G005 - 地铁站</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>详细地址</label>
+        <input type="text" id="report-address" placeholder="请输入详细地址">
+      </div>
+      <div class="form-group">
+        <label>车辆数量</label>
+        <input type="number" id="report-vehicles" value="20" min="1">
+      </div>
+      <div class="form-group">
+        <label>故障车数量</label>
+        <input type="number" id="report-faults" value="2" min="0">
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="report-noparking">
+          禁停区（优先级更高）
+        </label>
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="report-remark" rows="3" placeholder="选填"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="hideModal("report-modal")">取消</button>
+        <button class="btn btn-primary" onclick="submitReport()">提交上报</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/inspector.js"></script>
+</body>
+</html>

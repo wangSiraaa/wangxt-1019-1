@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>调度员 - 共享单车调度系统</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back-btn">返回首页</a>
+    <h1>🚚 调度员工作台</h1>
+    <span style="color:#888;font-size:0.9rem;">派车调度 · 运力管理</span>
+  </div>
+
+  <div class="container">
+    <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+      <div class="stat-card">
+        <div class="label">待派车任务</div>
+        <div class="value" id="stat-pending" style="color:#f39c12;">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">进行中</div>
+        <div class="value" id="stat-progress">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">可用车辆</div>
+        <div class="value" id="stat-vehicles" style="color:#27ae60;">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">剩余容量</div>
+        <div class="value" id="stat-capacity">0</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2><span>待派车淤积点</span><span class="priority-high" style="margin-left:auto;font-size:0.8rem;">🔴 禁停区优先</span></h2>
+        <div style="max-height:500px;overflow-y:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>编号</th>
+                <th>位置</th>
+                <th>车辆</th>
+                <th>优先级</th>
+                <th>SLA</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="pending-list">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>车辆运力</h2>
+        <div id="vehicles-list" style="max-height:500px;overflow-y:auto;">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <h2>
+        <span>派车计划</span>
+        <div style="margin-left:auto;display:flex;gap:0.5rem;">
+          <button class="btn btn-secondary" onclick="loadDispatchPlans()">刷新</button>
+        </div>
+      </h2>
+      <div class="tabs">
+        <div class="tab active" onclick="switchPlanTab("all", this)">全部</div>
+        <div class="tab" onclick="switchPlanTab("pending", this)">待出发</div>
+        <div class="tab" onclick="switchPlanTab("in_progress", this)">进行中</div>
+        <div class="tab" onclick="switchPlanTab("completed", this)">已完成</div>
+        <div class="tab" onclick="switchPlanTab("withdrawn", this)">已撤回</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>计划编号</th>
+            <th>淤积点</th>
+            <th>车辆</th>
+            <th>装载量</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="plans-list">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal" id="dispatch-modal">
+    <div class="modal-content">
+      <h3>安排派车</h3>
+      <div class="form-group">
+        <label>淤积点</label>
+        <input type="text" id="dispatch-silt-info" disabled>
+      </div>
+      <div class="form-group">
+        <label>选择车辆</label>
+        <select id="dispatch-vehicle" onchange="updateCapacityInfo()">
+        </select>
+      </div>
+      <div class="form-group">
+        <div id="capacity-info" style="background:#f8f9fa;padding:0.75rem;border-radius:6px;font-size:0.85rem;">
+          车辆容量信息
+        </div>
+      </div>
+      <div class="form-group">
+        <label>装载数量</label>
+        <input type="number" id="dispatch-load" value="20" min="1" onchange="checkCapacity()">
+        <div id="load-warning" style="color:#e74c3c;font-size:0.8rem;margin-top:0.25rem;display:none;">⚠️ 超过车辆可用容量！</div>
+      </div>
+      <div class="form-group">
+        <label>路线成本（元）</label>
+        <input type="number" id="dispatch-cost" value="50" min="0">
+      </div>
+      <div class="form-group">
+        <label>司机</label>
+        <select id="dispatch-driver">
+        </select>
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="dispatch-remark" rows="2"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="hideModal("dispatch-modal")">取消</button>
+        <button class="btn btn-primary" onclick="submitDispatch()">确认派车</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="withdraw-modal">
+    <div class="modal-content">
+      <h3>撤回派车</h3>
+      <div class="form-group">
+        <label style="color:#e74c3c;">撤回原因 <span style="color:red;">*</span></label>
+        <select id="withdraw-reason-select" onchange="checkWithdrawReason()">
+          <option value="">请选择或填写原因</option>
+          <option value="车辆故障">车辆故障</option>
+          <option value="司机临时有事">司机临时有事</option>
+          <option value="淤积点信息有误">淤积点信息有误</option>
+          <option value="优先处理其他任务">优先处理其他任务</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>详细说明</label>
+        <textarea id="withdraw-reason-detail" rows="4" placeholder="请详细说明撤回原因..."></textarea>
+      </div>
+      <div style="background:#fff3cd;padding:0.75rem;border-radius:6px;font-size:0.85rem;color:#856404;">
+        ⚠️ 撤回后淤积点将重新回到待派车状态，车辆占用容量将被释放。
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="hideModal("withdraw-modal")">取消</button>
+        <button class="btn btn-danger" onclick="submitWithdraw()">确认撤回</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/dispatcher.js"></script>
+</body>
+</html>

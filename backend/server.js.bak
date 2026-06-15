@@ -1,0 +1,519 @@
+const express = require("express");
+const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
+
+const DATA_FILE = path.join(__dirname, "data.json");
+let data = null;
+
+function loadData() {
+  const raw = fs.readFileSync(DATA_FILE, "utf8");
+  data = JSON.parse(raw);
+}
+
+function saveData() {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf8");
+}
+function getNextId(collection) {
+  const id = data.nextIds[collection];
+  data.nextIds[collection]++;
+  return id;
+}
+
+function formatDate(d) {
+  const date = d instanceof Date ? d : new Date(d);
+  const pad = n => n.toString().padStart(2, "0");
+  return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
+}
+
+function createSnapshot(siltPointId, action, remark) {
+  const sp = data.siltPoints.find(s => s.id === siltPointId);
+  if (sp == null) return null;
+  const snapshot = {
+    id: getNextId("siltPointSnapshots"),
+    silt_point_id: siltPointId,
+    status: sp.status,
+    vehicle_count: sp.vehicle_count,
+    fault_count: sp.fault_count,
+    action: action,
+    remark: remark ? remark : "",
+    created_at: formatDate(new Date())
+  };
+  data.siltPointSnapshots.push(snapshot);
+  return snapshot;
+}
+
+loadData();
+app.get("/api/silt-points", (req, res) => {
+  const status = req.query.status;
+  const grid = req.query.grid;
+  let result = [...data.siltPoints];
+  if (status) {
+    result = result.filter(s => s.status === status);
+  }
+  if (grid) {
+    result = result.filter(s => s.grid_code === grid);
+  }
+  result.sort((a, b) => {
+    if (a.priority !== b.priority) return b.priority - a.priority;
+    return new Date(a.created_at) - new Date(b.created_at);
+  });
+  res.json(result);
+});
+
+app.get("/api/silt-points/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const sp = data.siltPoints.find(s => s.id === id);
+  if (sp == null) {
+    return res.status(404).json({ error: "Silt point not found" });
+  }
+  res.json(sp);
+});
+app.post("/api/silt-points", (req, res) => {
+  const body = req.body;
+  const isNoParking = body.is_no_parking === true || body.is_no_parking === "true";
+  const priority = isNoParking ? 10 : 1;
+  const slaMinutes = isNoParking ? 30 : 120;
+  const now = new Date();
+  const deadline = new Date(now.getTime() + slaMinutes * 60 * 1000);
+  const sp = {
+    id: getNextId("siltPoints"),
+    code: "SP" + String(data.nextIds.siltPoints).padStart(6, "0"),
+    grid_code: body.grid_code || "G001",
+    grid_name: body.grid_name || "默认网格",
+    address: body.address || "",
+    lng: body.lng || 116.4074,
+    lat: body.lat || 39.9042,
+    is_no_parking: isNoParking,
+    vehicle_count: body.vehicle_count || 0,
+    fault_count: body.fault_count || 0,
+    priority: priority,
+    status: "reported",
+    reporter: body.reporter || "巡检员",
+    remark: body.remark || "",
+    sla_minutes: slaMinutes,
+    sla_deadline: formatDate(deadline),
+    is_secondary_silt: body.is_secondary_silt || false,
+    parent_silt_id: body.parent_silt_id || null,
+    complaint_source: body.complaint_source || null,
+    created_at: formatDate(now),
+    updated_at: formatDate(now)
+  };
+  data.siltPoints.push(sp);
+  createSnapshot(sp.id, "report", "巡检员上报淤积点");
+  saveData();
+  res.status(201).json(sp);
+});
+
+app.get("/api/silt-points/:id/snapshots", (req, res) => {
+  const id = parseInt(req.params.id);
+  const snapshots = data.siltPointSnapshots.filter(s => s.silt_point_id === id);
+  res.json(snapshots.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+});
+app.get("/api/dispatch-plans", (req, res) => {
+  const status = req.query.status;
+  const vehicleId = req.query.vehicle_id;
+  let result = [...data.dispatchPlans];
+  if (status) {
+    result = result.filter(d => d.status === status);
+  }
+  if (vehicleId) {
+    result = result.filter(d => d.vehicle_id === parseInt(vehicleId));
+  }
+  result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  res.json(result);
+});
+
+app.get("/api/vehicles", (req, res) => {
+  res.json(data.vehicles);
+});
+
+app.get("/api/vehicles/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const v = data.vehicles.find(v => v.id === id);
+  if (v == null) {
+    return res.status(404).json({ error: "Vehicle not found" });
+  }
+  res.json(v);
+});
+
+app.get("/api/drivers", (req, res) => {
+  const onDuty = req.query.on_duty;
+  let result = [...data.drivers];
+  if (onDuty) {
+    result = result.filter(d => d.on_duty === true);
+  }
+  res.json(result);
+});
+app.post("/api/dispatch-plans", (req, res) => {
+  const body = req.body;
+  const siltPointId = body.silt_point_id;
+  const vehicleId = body.vehicle_id;
+  const driverId = body.driver_id;
+  const loadCount = body.load_count || 0;
+  const routeCost = body.route_cost || 0;
+
+  const sp = data.siltPoints.find(s => s.id === siltPointId);
+  if (sp == null) {
+    return res.status(404).json({ error: "淤积点不存在" });
+  }
+
+  if (sp.status === "closed") {
+    return res.status(400).json({ error: "已关闭的淤积点不能再次派车" });
+  }
+
+  const vehicle = data.vehicles.find(v => v.id === vehicleId);
+  if (vehicle == null) {
+    return res.status(404).json({ error: "车辆不存在" });
+  }
+
+  const availableCapacity = vehicle.capacity - vehicle.current_load;
+  if (loadCount > availableCapacity) {
+    return res.status(400).json({
+      error: "车辆容量不足",
+      available_capacity: availableCapacity,
+      requested: loadCount,
+      vehicle_capacity: vehicle.capacity,
+      current_load: vehicle.current_load
+    });
+  }
+
+  if (loadCount > sp.vehicle_count) {
+    return res.status(400).json({ error: "装载量不能超过淤积点车辆数" });
+  }
+
+  const now = new Date();
+  const plan = {
+    id: getNextId("dispatchPlans"),
+    code: "DP" + String(data.nextIds.dispatchPlans).padStart(6, "0"),
+    silt_point_id: siltPointId,
+    silt_point_code: sp.code,
+    vehicle_id: vehicleId,
+    vehicle_code: vehicle.code,
+    driver_id: driverId,
+    driver_name: body.driver_name || "",
+    load_count: loadCount,
+    route_cost: routeCost,
+    priority: sp.priority,
+    is_no_parking: sp.is_no_parking,
+    status: "pending",
+    dispatcher: body.dispatcher || "调度员",
+    remark: body.remark || "",
+    scheduled_at: body.scheduled_at || formatDate(now),
+    created_at: formatDate(now),
+    updated_at: formatDate(now)
+  };
+  data.dispatchPlans.push(plan);
+  sp.status = "dispatched";
+  sp.updated_at = formatDate(now);
+  vehicle.current_load += loadCount;
+  createSnapshot(siltPointId, "dispatch", "派车: " + vehicle.code);
+  saveData();
+  res.status(201).json(plan);
+});
+app.put("/api/dispatch-plans/:id/start", (req, res) => {
+  const id = parseInt(req.params.id);
+  const plan = data.dispatchPlans.find(p => p.id === id);
+  if (plan == null) {
+    return res.status(404).json({ error: "派车计划不存在" });
+  }
+  if (plan.status !== "pending") {
+    return res.status(400).json({ error: "只有待出发状态的计划才能开始" });
+  }
+  const now = new Date();
+  plan.status = "in_progress";
+  plan.started_at = formatDate(now);
+  plan.updated_at = formatDate(now);
+  const sp = data.siltPoints.find(s => s.id === plan.silt_point_id);
+  if (sp) {
+    sp.status = "processing";
+    sp.updated_at = formatDate(now);
+    createSnapshot(sp.id, "start_process", "开始清运");
+  }
+  const track = {
+    id: getNextId("driverTracks"),
+    dispatch_plan_id: id,
+    driver_id: plan.driver_id,
+    vehicle_id: plan.vehicle_id,
+    status: "on_route",
+    location: "出发中",
+    recorded_at: formatDate(now)
+  };
+  data.driverTracks.push(track);
+  saveData();
+  res.json(plan);
+});
+
+app.put("/api/dispatch-plans/:id/complete", (req, res) => {
+  const id = parseInt(req.params.id);
+  const plan = data.dispatchPlans.find(p => p.id === id);
+  if (plan == null) {
+    return res.status(404).json({ error: "派车计划不存在" });
+  }
+  if (plan.status !== "in_progress") {
+    return res.status(400).json({ error: "只有进行中的计划才能完成" });
+  }
+  const now = new Date();
+  plan.status = "completed";
+  plan.completed_at = formatDate(now);
+  plan.updated_at = formatDate(now);
+  const vehicle = data.vehicles.find(v => v.id === plan.vehicle_id);
+  if (vehicle) {
+    vehicle.current_load = Math.max(0, vehicle.current_load - plan.load_count);
+  }
+  const sp = data.siltPoints.find(s => s.id === plan.silt_point_id);
+  if (sp) {
+    sp.vehicle_count = Math.max(0, sp.vehicle_count - plan.load_count);
+    if (sp.vehicle_count === 0) {
+      sp.status = "closed";
+      sp.closed_at = formatDate(now);
+    } else {
+      sp.status = "reported";
+    }
+    sp.updated_at = formatDate(now);
+    createSnapshot(sp.id, "complete", "完成清运 " + plan.load_count + " 辆");
+  }
+  const load = {
+    id: getNextId("vehicleLoads"),
+    dispatch_plan_id: id,
+    vehicle_id: plan.vehicle_id,
+    load_count: plan.load_count,
+    loaded_at: formatDate(now)
+  };
+  data.vehicleLoads.push(load);
+  saveData();
+  res.json(plan);
+});
+app.put("/api/dispatch-plans/:id/withdraw", (req, res) => {
+  const id = parseInt(req.params.id);
+  const reason = req.body.reason;
+  if (reason == null || reason.trim().length === 0) {
+    return res.status(400).json({ error: "撤回原因不能为空" });
+  }
+  const plan = data.dispatchPlans.find(p => p.id === id);
+  if (plan == null) {
+    return res.status(404).json({ error: "派车计划不存在" });
+  }
+  if (plan.status === "completed" || plan.status === "withdrawn") {
+    return res.status(400).json({ error: "当前状态不能撤回" });
+  }
+  const now = new Date();
+  plan.status = "withdrawn";
+  plan.withdrawn_at = formatDate(now);
+  plan.updated_at = formatDate(now);
+  plan.withdraw_reason = reason;
+  const vehicle = data.vehicles.find(v => v.id === plan.vehicle_id);
+  if (vehicle) {
+    vehicle.current_load = Math.max(0, vehicle.current_load - plan.load_count);
+  }
+  const sp = data.siltPoints.find(s => s.id === plan.silt_point_id);
+  if (sp) {
+    sp.status = "reported";
+    sp.updated_at = formatDate(now);
+    createSnapshot(sp.id, "withdraw", "撤回派车: " + reason);
+  }
+  const record = {
+    id: getNextId("withdrawRecords"),
+    dispatch_plan_id: id,
+    silt_point_id: plan.silt_point_id,
+    reason: reason,
+    operator: req.body.operator || "调度员",
+    created_at: formatDate(now)
+  };
+  data.withdrawRecords.push(record);
+  saveData();
+  res.json(plan);
+});
+
+app.get("/api/withdraw-records", (req, res) => {
+  const siltPointId = req.query.silt_point_id;
+  let result = [...data.withdrawRecords];
+  if (siltPointId) {
+    result = result.filter(r => r.silt_point_id === parseInt(siltPointId));
+  }
+  result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  res.json(result);
+});
+
+app.get("/api/sla-config", (req, res) => {
+  res.json(data.slaConfig);
+});
+function isOverdue(sp) {
+  if (sp.status === "closed") return false;
+  const deadline = new Date(sp.sla_deadline);
+  const now = new Date();
+  return now > deadline;
+}
+
+function getRemainingMinutes(sp) {
+  const deadline = new Date(sp.sla_deadline);
+  const now = new Date();
+  return Math.round((deadline - now) / 60000);
+}
+
+app.get("/api/stats/overview", (req, res) => {
+  const total = data.siltPoints.length;
+  const reported = data.siltPoints.filter(s => s.status === "reported").length;
+  const dispatched = data.siltPoints.filter(s => s.status === "dispatched").length;
+  const processing = data.siltPoints.filter(s => s.status === "processing").length;
+  const closed = data.siltPoints.filter(s => s.status === "closed").length;
+  const noParking = data.siltPoints.filter(s => s.is_no_parking).length;
+  const overdue = data.siltPoints.filter(s => isOverdue(s)).length;
+  const secondary = data.siltPoints.filter(s => s.is_secondary_silt).length;
+  const totalVehicles = data.vehicles.length;
+  const availableCapacity = data.vehicles.reduce((sum, v) => sum + (v.capacity - v.current_load), 0);
+  res.json({
+    total_silt_points: total,
+    by_status: { reported, dispatched, processing, closed },
+    no_parking_count: noParking,
+    overdue_count: overdue,
+    secondary_silt_count: secondary,
+    total_vehicles: totalVehicles,
+    total_capacity: data.vehicles.reduce((s, v) => s + v.capacity, 0),
+    available_capacity: availableCapacity,
+    pending_plans: data.dispatchPlans.filter(p => p.status === "pending").length,
+    in_progress_plans: data.dispatchPlans.filter(p => p.status === "in_progress").length
+  });
+});
+
+app.get("/api/stats/sla", (req, res) => {
+  const openPoints = data.siltPoints.filter(s => s.status !== "closed");
+  const onTime = openPoints.filter(s => isOverdue(s) === false).length;
+  const overdue = openPoints.filter(s => isOverdue(s)).length;
+  const closedToday = data.siltPoints.filter(s => {
+    if (s.status !== "closed" || s.closed_at == null) return false;
+    const today = new Date().toDateString();
+    return new Date(s.closed_at).toDateString() === today;
+  }).length;
+  const avgHandleTime = 0;
+  res.json({
+    on_time: onTime,
+    overdue: overdue,
+    total_open: openPoints.length,
+    on_time_rate: openPoints.length > 0 ? Math.round(onTime / openPoints.length * 100) : 0,
+    closed_today: closedToday,
+    avg_handle_minutes: avgHandleTime
+  });
+});
+app.get("/api/stats/complaint-sources", (req, res) => {
+  const sources = {};
+  data.siltPoints.forEach(sp => {
+    const src = sp.complaint_source || "巡检上报";
+    if (sources[src] == null) sources[src] = 0;
+    sources[src]++;
+  });
+  const result = Object.keys(sources).map(k => ({ source: k, count: sources[k] }));
+  result.sort((a, b) => b.count - a.count);
+  res.json(result);
+});
+
+app.get("/api/stats/grid", (req, res) => {
+  const grids = {};
+  data.siltPoints.forEach(sp => {
+    const code = sp.grid_code || "未知";
+    if (grids[code] == null) {
+      grids[code] = { grid_code: code, grid_name: sp.grid_name || code, count: 0, vehicles: 0 };
+    }
+    grids[code].count++;
+    grids[code].vehicles += sp.vehicle_count || 0;
+  });
+  const result = Object.values(grids);
+  result.sort((a, b) => b.count - a.count);
+  res.json(result);
+});
+
+app.get("/api/stats/heatmap", (req, res) => {
+  const result = data.siltPoints
+    .filter(sp => sp.status !== "closed")
+    .map(sp => ({
+      lng: sp.lng,
+      lat: sp.lat,
+      count: sp.vehicle_count || 1,
+      is_no_parking: sp.is_no_parking,
+      status: sp.status,
+      priority: sp.priority
+    }));
+  res.json(result);
+});
+
+app.get("/api/stats/sla-red-list", (req, res) => {
+  const overdue = data.siltPoints.filter(sp => isOverdue(sp));
+  const result = overdue.map(sp => ({
+    id: sp.id,
+    code: sp.code,
+    grid_name: sp.grid_name,
+    address: sp.address,
+    is_no_parking: sp.is_no_parking,
+    vehicle_count: sp.vehicle_count,
+    status: sp.status,
+    sla_deadline: sp.sla_deadline,
+    overdue_minutes: Math.abs(getRemainingMinutes(sp)),
+    priority: sp.priority
+  }));
+  result.sort((a, b) => b.overdue_minutes - a.overdue_minutes);
+  res.json(result.slice(0, 20));
+});
+app.get("/api/stats/secondary-silt", (req, res) => {
+  const secondary = data.siltPoints.filter(sp => sp.is_secondary_silt);
+  const result = secondary.map(sp => ({
+    id: sp.id,
+    code: sp.code,
+    grid_name: sp.grid_name,
+    parent_silt_id: sp.parent_silt_id,
+    vehicle_count: sp.vehicle_count,
+    status: sp.status,
+    created_at: sp.created_at
+  }));
+  result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  res.json({
+    total: secondary.length,
+    list: result
+  });
+});
+
+app.get("/api/stats/performance", (req, res) => {
+  const closed = data.siltPoints.filter(s => s.status === "closed");
+  const totalClosed = closed.length;
+  const totalVehicles = data.vehicles.length;
+  const totalDrivers = data.drivers.length;
+  const totalDispatch = data.dispatchPlans.filter(p => p.status === "completed").length;
+  const totalWithdraw = data.dispatchPlans.filter(p => p.status === "withdrawn").length;
+  const totalLoad = data.dispatchPlans
+    .filter(p => p.status === "completed")
+    .reduce((sum, p) => sum + (p.load_count || 0), 0);
+  const totalCost = data.dispatchPlans
+    .filter(p => p.status === "completed")
+    .reduce((sum, p) => sum + (p.route_cost || 0), 0);
+  res.json({
+    total_closed_points: totalClosed,
+    total_completed_dispatches: totalDispatch,
+    total_withdrawals: totalWithdraw,
+    total_vehicles_moved: totalLoad,
+    total_route_cost: totalCost,
+    total_vehicles: totalVehicles,
+    total_drivers: totalDrivers,
+    avg_load_per_dispatch: totalDispatch > 0 ? Math.round(totalLoad / totalDispatch) : 0
+  });
+});
+
+app.get("/api/stats/withdraw-reasons", (req, res) => {
+  const reasons = {};
+  data.withdrawRecords.forEach(r => {
+    const reason = r.reason || "其他";
+    if (reasons[reason] == null) reasons[reason] = 0;
+    reasons[reason]++;
+  });
+  const result = Object.keys(reasons).map(k => ({ reason: k, count: reasons[k] }));
+  result.sort((a, b) => b.count - a.count);
+  res.json(result);
+});
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});

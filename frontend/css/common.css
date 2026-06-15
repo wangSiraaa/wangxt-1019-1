@@ -1,0 +1,500 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f7fa;
+  color: #333;
+}
+
+.role-selector {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.role-selector h1 {
+  color: white;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.role-selector .subtitle {
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 3rem;
+  font-size: 1.1rem;
+}
+
+.role-cards {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.role-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  width: 240px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.role-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.role-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.role-card h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.role-card p {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.role-card.inspector .role-icon { color: #3498db; }
+.role-card.dispatcher .role-icon { color: #e67e22; }
+.role-card.manager .role-icon { color: #9b59b6; }
+
+.header {
+  background: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h1 {
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.header .back-btn {
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.container {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  margin-bottom: 1.5rem;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2980b9;
+}
+
+.btn-warning {
+  background: #f39c12;
+  color: white;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-success {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-reported { background: #fff3cd; color: #856404; }
+.status-dispatched { background: #cce5ff; color: #004085; }
+.status-processing { background: #d4edda; color: #155724; }
+.status-closed { background: #e2e3e5; color: #383d41; }
+.status-withdrawn { background: #f8d7da; color: #721c24; }
+.status-pending { background: #fff3cd; color: #856404; }
+.status-in_progress { background: #d4edda; color: #155724; }
+.status-completed { background: #d1ecf1; color: #0c5460; }
+
+.priority-high {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+tr:hover {
+  background: #f8f9fa;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.stat-card .label {
+  color: #888;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card .value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-card .trend {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.sla-warning { color: #f39c12; }
+.sla-danger { color: #e74c3c; }
+.sla-ok { color: #27ae60; }
+
+.no-parking-tag {
+  display: inline-block;
+  background: #e74c3c;
+  color: white;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-content h3 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #eee;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  color: #666;
+  font-weight: 500;
+}
+
+.tab.active {
+  color: #3498db;
+  border-bottom-color: #3498db;
+}
+
+.capacity-bar {
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.capacity-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
+  transition: width 0.3s;
+}
+
+.red-list-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: #fff5f5;
+  border-left: 4px solid #e74c3c;
+}
+
+.red-list-item .rank {
+  font-weight: bold;
+  color: #e74c3c;
+  margin-right: 1rem;
+  width: 24px;
+}
+
+.chart-container {
+  height: 300px;
+}
+
+.map-container {
+  height: 400px;
+  background: #e8f4f8;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+/* SLA 红榜 */
+.sla-red-item {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #fff5f5;
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+}
+
+.red-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.red-info {
+  flex: 1;
+}
+
+.red-title {
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+
+.red-desc {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.red-time {
+  text-align: right;
+}
+
+.level-danger {
+  border-left-color: #e74c3c;
+  background: #fff5f5;
+}
+
+.level-warning {
+  border-left-color: #f39c12;
+  background: #fff8e6;
+}
+
+.level-normal {
+  border-left-color: #3498db;
+  background: #e8f4fd;
+}
+
+/* 绩效项 */
+.perf-item {
+  padding: 0.8rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.perf-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.3rem;
+}
+
+.perf-value {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+/* 图表容器 */
+.chart-container {
+  height: 280px;
+}
+
+/* 禁停标签 */
+.no-parking-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #e74c3c;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.priority-high {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* 容量条 */
+.capacity-bar {
+  height: 10px;
+  background: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.capacity-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
+  transition: width 0.3s;
+}
+
+/* 警告提示 */
+.alert-warning {
+  padding: 0.8rem 1rem;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
